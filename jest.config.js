@@ -8,6 +8,7 @@ module.exports = {
   collectCoverageFrom: [
     'src/lib/**/*.{ts,tsx}',
     'src/hooks/**/*.{ts,tsx}',
+    'src/stores/**/*.{ts,tsx}',
     // Expo template theming hooks — presentation infra, not game logic.
     // Removed when the UI is rebuilt; drop these exclusions then.
     '!src/hooks/use-color-scheme*.ts',
