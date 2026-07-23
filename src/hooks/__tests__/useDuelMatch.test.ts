@@ -1,6 +1,12 @@
-// ported from instrumenttuner@7156e04
+// ported from instrumenttuner@7156e04 — diverges: Second Wind REVIVE action (see CLAUDE.md)
 import { renderHook, act } from '@testing-library/react-native'
-import { useDuelMatch, duelReducer } from '@/hooks/useDuelMatch'
+import {
+  useDuelMatch,
+  duelReducer,
+  matchReducer,
+  SECOND_WIND_HP,
+} from '@/hooks/useDuelMatch'
+import type { MatchState } from '@/hooks/useDuelMatch'
 import { STARTING_HP } from '@/lib/duel/types'
 
 // Deterministic RNG: always midpoint -> target 120
@@ -112,5 +118,123 @@ describe('useDuelMatch', () => {
     await act(() => result.current.startMatch('tap'))
     expect(result.current.state.target).toBeGreaterThanOrEqual(40)
     expect(result.current.state.target).toBeLessThanOrEqual(200)
+  })
+})
+
+describe('Second Wind revive', () => {
+  // Crafted victory state: player 0 is the decorated winner (wins=2,
+  // multiplier=3), player 1 is defeated (hp 0) and eligible for revive.
+  const victoryState: MatchState = {
+    phase: 'victory',
+    mode: 'tap',
+    target: 120,
+    players: [
+      { hp: 100, wins: 2, multiplier: 3 },
+      { hp: 0, wins: 0, multiplier: 1 },
+    ],
+    p1Answer: 120,
+    p2Answer: 280,
+    lastResult: null,
+    roundNumber: 3,
+    reviveUsed: [false, false],
+  }
+
+  it('revive in a non-victory phase is a no-op', () => {
+    const state: MatchState = { ...victoryState, phase: 'reveal' }
+    const next = matchReducer(state, {
+      type: 'REVIVE',
+      player: 1,
+      target: 77,
+    })
+    expect(next).toBe(state)
+  })
+
+  it('revive when the player still has hp is a no-op', () => {
+    const state: MatchState = {
+      ...victoryState,
+      players: [victoryState.players[0], { ...victoryState.players[1], hp: 5 }],
+    }
+    const next = matchReducer(state, {
+      type: 'REVIVE',
+      player: 1,
+      target: 77,
+    })
+    expect(next).toBe(state)
+  })
+
+  it('revive when the player already used their revive is a no-op (re-defeat after a legal revive)', () => {
+    // Simulates: player 1 was revived once, fought on, and was defeated again.
+    const state: MatchState = {
+      ...victoryState,
+      reviveUsed: [false, true],
+    }
+    const next = matchReducer(state, {
+      type: 'REVIVE',
+      player: 1,
+      target: 77,
+    })
+    expect(next).toBe(state)
+  })
+
+  it('legal revive: hp -> 40, phase -> p1-turn, fresh round, reviveUsed set, both players wins/multiplier preserved', () => {
+    const next = matchReducer(victoryState, {
+      type: 'REVIVE',
+      player: 1,
+      target: 77,
+    })
+    expect(next.phase).toBe('p1-turn')
+    expect(next.target).toBe(77)
+    expect(next.players[1].hp).toBe(SECOND_WIND_HP)
+    expect(next.players[1].wins).toBe(victoryState.players[1].wins)
+    expect(next.players[1].multiplier).toBe(victoryState.players[1].multiplier)
+    expect(next.players[0]).toEqual(victoryState.players[0])
+    expect(next.p1Answer).toBeNull()
+    expect(next.p2Answer).toBeNull()
+    expect(next.lastResult).toBeNull()
+    expect(next.roundNumber).toBe(victoryState.roundNumber + 1)
+    expect(next.reviveUsed).toEqual([false, true])
+  })
+
+  it('START_MATCH resets reviveUsed to [false, false]', () => {
+    const used: MatchState = { ...victoryState, reviveUsed: [true, true] }
+    const next = matchReducer(used, {
+      type: 'START_MATCH',
+      mode: 'tap',
+      target: 50,
+    })
+    expect(next.reviveUsed).toEqual([false, false])
+  })
+
+  it('REMATCH resets reviveUsed to [false, false]', () => {
+    const used: MatchState = { ...victoryState, reviveUsed: [true, true] }
+    const next = matchReducer(used, { type: 'REMATCH', target: 50 })
+    expect(next.reviveUsed).toEqual([false, false])
+  })
+
+  it('non-revive actions carry reviveUsed forward unchanged', () => {
+    const used: MatchState = {
+      ...victoryState,
+      phase: 'p2-turn',
+      reviveUsed: [false, true],
+    }
+    const next = matchReducer(used, { type: 'SUBMIT', answer: 120 })
+    expect(next.reviveUsed).toEqual([false, true])
+  })
+
+  it('hook: revive(player) drives player 0 from a real defeat back into p1-turn', async () => {
+    // rng = 0.5 -> target 120. p1 submits 280 (clamped distance 160), p2
+    // submits 120 (perfect) -> p2 wins, damage 160 = STARTING_HP -> p1 (0) defeated.
+    const { result } = await renderHook(() => useDuelMatch(rng))
+    await act(() => result.current.startMatch('tap'))
+    await act(() => result.current.submit(280))
+    await act(() => result.current.submit(120))
+    expect(result.current.state.phase).toBe('victory')
+    expect(result.current.state.players[0].hp).toBe(0)
+
+    await act(() => result.current.revive(0))
+
+    expect(result.current.state.phase).toBe('p1-turn')
+    expect(result.current.state.players[0].hp).toBe(SECOND_WIND_HP)
+    expect(result.current.state.reviveUsed).toEqual([true, false])
   })
 })
