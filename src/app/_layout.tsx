@@ -4,6 +4,13 @@ import { useColorScheme } from 'react-native'
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon'
 import AppTabs from '@/components/app-tabs'
+import { initSentry } from '@/lib/sentry'
+
+// Task 14: env-gated Sentry init only. No error boundary wrap here — its
+// fallback (when unconfigured) renders null on any caught error, a
+// behavior change independent of the DSN gate; deferred to Task 11's
+// rework of this file. Keep this block minimal and easy to lift out.
+initSentry()
 
 SplashScreen.preventAutoHideAsync()
 
