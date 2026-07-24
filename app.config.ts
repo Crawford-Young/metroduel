@@ -7,6 +7,10 @@ import type { ExpoConfig } from 'expo/config'
 const config: ExpoConfig = {
   name: 'MetroDuel',
   slug: 'metroduel',
+  // EAS project owner — user has two Expo accounts (carsickyak,
+  // crawfordyoung); MetroDuel lives under crawfordyoung (user pick
+  // 2026-07-23, matches ios.bundleIdentifier).
+  owner: 'crawfordyoung',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
@@ -59,6 +63,13 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
+  },
+  extra: {
+    eas: {
+      // eas init cannot write into dynamic config — added manually
+      // (public project identifier, not a secret).
+      projectId: '0e8c7123-f8df-49b2-b59e-d0623ba62479',
+    },
   },
 }
 
