@@ -39,6 +39,22 @@ const config: ExpoConfig = {
         imageWidth: 76,
       },
     ],
+    [
+      'react-native-google-mobile-ads',
+      {
+        // Crash guard (T13.2): react-native-google-mobile-ads' config
+        // plugin no-ops on iOS when `iosAppId` is omitted (plugin/build/
+        // index.js withIosAppId, ~line 54-61) rather than erroring at
+        // prebuild time -- but the native SDK itself crashes at app launch
+        // if Info.plist's GADApplicationIdentifier is missing (the plugin's
+        // own console.warn, ~line 93-95, confirms this). A device dev build
+        // happens before the real ad unit ids land in 13.3, so this uses
+        // Google's published iOS TEST app id (public sample id, not a
+        // secret) purely to keep that build from crashing at launch.
+        // Replaced with the real iOS app id when ads are wired in 13.3.
+        iosAppId: 'ca-app-pub-3940256099942544~1458002511',
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
