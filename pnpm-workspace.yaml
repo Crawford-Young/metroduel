@@ -1,0 +1,3 @@
+overrides:
+  # GHSA-mrhx-c7xc-m3w5 (@expo/cli asks ^3.25.76; no 3.x patch exists; only simple DevTools schemas use it)
+  zod: 4.6.7
