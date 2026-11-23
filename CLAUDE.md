@@ -6,7 +6,7 @@ MetroDuel is a standalone iOS rhythm-battle game (Expo / React Native) built fro
 
 ## Stack
 
-Expo SDK 57 (RN 0.86, React 19.2), TypeScript strict, Expo Router (file-based, `src/app/`), NativeWind v4, Zustand, `react-native-mmkv`, `react-native-audio-api`, `react-native-google-mobile-ads`, `@sentry/react-native`. Jest + React Native Testing Library, Maestro, EAS. pnpm only.
+Expo SDK 57 (RN 0.86, React 19.2), TypeScript strict, Expo Router (file-based, `src/app/`), NativeWind v4, Zustand, `react-native-mmkv`, `react-native-audio-api`, `react-native-google-mobile-ads`. Jest + React Native Testing Library, Maestro, EAS. pnpm only.
 
 ## Deviations from the domain defaults
 
@@ -16,7 +16,7 @@ Expo SDK 57 (RN 0.86, React 19.2), TypeScript strict, Expo Router (file-based, `
 
 ## Env-gating rule
 
-Ads and Sentry are fully env-gated. No configured ad unit IDs (`EXPO_PUBLIC_ADMOB_*` empty) → zero ad code paths run in dev, CI, Jest, and Maestro. Empty `SENTRY_DSN` → crash reporting off. See `.env.example`; real values live in `.env.local` (gitignored).
+Ads are fully env-gated. No configured ad unit IDs (`EXPO_PUBLIC_ADMOB_*` empty) → zero ad code paths run in dev, CI, Jest, and Maestro. No crash reporting: Sentry was dropped ahead of the GCP move, and crash reporting gets picked with that migration. See `.env.example`; real values live in `.env.local` (gitignored).
 
 ## Native-module note
 
@@ -28,3 +28,9 @@ Ads and Sentry are fully env-gated. No configured ad unit IDs (`EXPO_PUBLIC_ADMO
 - TypeScript strict; no `any` (`@typescript-eslint/no-explicit-any` is an error); interfaces over type aliases; explicit return types on exported functions; named constants over magic numbers.
 - Jest coverage is enforced at 100% (branches/functions/lines/statements) scoped to `src/lib/**` and `src/hooks/**`.
 - Conventional Commits (commitlint + husky). Co-Authored-By trailer on every commit.
+
+## Setup and CI
+
+- `postinstall` runs `scripts/ensure-expo-env.js`, which writes the gitignored `expo-env.d.ts` when it is missing, so `pnpm typecheck` (and the pre-commit hook) pass in a fresh clone or worktree without first running Expo (#12).
+- `pnpm-workspace.yaml` denies `unrs-resolver`'s install script explicitly (`ignoredBuiltDependencies` for pnpm 10, `allowBuilds` for pnpm 11), so installs stay clean under both majors.
+- `.github/workflows/ci.yml` runs lint, `format:check`, typecheck, Jest (100% coverage) and `pnpm audit --audit-level=high`. The two ignored GHSAs in `pnpm-workspace.yaml` `auditConfig` carry their reason inline; drop them once expo-router moves off query-string 7.

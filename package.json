@@ -56,7 +56,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "node ./scripts/ensure-expo-env.js"
   },
   "private": true
 }

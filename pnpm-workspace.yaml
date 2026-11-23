@@ -1,3 +1,26 @@
 overrides:
   # GHSA-mrhx-c7xc-m3w5 (@expo/cli asks ^3.25.76; no 3.x patch exists; only simple DevTools schemas use it)
   zod: 4.6.7
+  # Patch-level transitive fixes (supersede Dependabot #8, #9, #11)
+  node-forge: 1.4.3
+  postcss: 8.5.32
+  postcss-selector-parser: 6.1.5
+
+# unrs-resolver's install script only fetches an optional native fallback; the
+# prebuilt binary ships in its platform package. Denied explicitly so pnpm 10
+# stops warning and pnpm 11 doesn't fail with ERR_PNPM_IGNORED_BUILDS
+# (claude-config#364).
+ignoredBuiltDependencies:
+  - unrs-resolver
+allowBuilds:
+  unrs-resolver: false
+
+auditConfig:
+  ignoreGhsas:
+    # decode-uri-component 0.2.2 via expo-router > query-string@7. Both fixes
+    # (0.5.0 / 0.5.1) are ESM-only and query-string 7 require()s it, so an
+    # override breaks routing. The DoS needs a malformed URL parsed on the
+    # device, from the app's own links. Drop these once expo-router moves to
+    # query-string 8+.
+    - GHSA-qr28-fpjm-wq7f
+    - GHSA-vcc3-ghjq-m6fr
