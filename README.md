@@ -4,7 +4,7 @@ A standalone iOS rhythm-battle game built with Expo / React Native. Guess or tap
 
 ## Stack
 
-Expo SDK 57 · TypeScript (strict) · Expo Router · NativeWind v4 · Zustand · react-native-mmkv · react-native-audio-api · env-gated AdMob · Sentry · Jest + React Native Testing Library · Maestro · EAS.
+Expo SDK 57 · TypeScript (strict) · Expo Router · NativeWind v4 · Zustand · react-native-mmkv · react-native-audio-api · env-gated AdMob · Jest + React Native Testing Library · Maestro · EAS.
 
 ## Requirements
 
